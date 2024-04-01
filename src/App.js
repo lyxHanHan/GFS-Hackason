@@ -1,20 +1,34 @@
-import logo from "./logo.svg";
 import "./App.css";
-import { ENet } from "@grnsft/if-plugins";
+import {ENet} from "@grnsft/if-plugins";
+import {useCallback, useEffect, useState} from 'react';
 
-function App() {
-  const test = async () => {
+const App = ()=> {
+
+  const [eNetResult,setENetResult] = useState([{}])
+
+  let count = 0;
+  const interval = setInterval(() => {
+    count++;
+    return count
+  }, 1000);
+
+  const test = useCallback(async () => {
     const eNet = ENet({'energy-per-gb': 0.002});
-    const result = await eNet.execute([
+    console.log("interval",interval)
+    return await eNet.execute([
       {
-        'network/data-in': 10,
+        'network/data-in': interval,
         'network/data-out': 5,
-        duration: 3600,
+        duration: interval,
         timestamp: '2022-01-01T01:00:00Z',
       },
-    ]);
-    console.log("result", result);
-  };
+    ]).then((data)=>setENetResult(data))
+  }, [interval]);
+
+  useEffect(() => {
+     test();
+  }, [ test]);
+
 
   // function getNetworkRequestSize(url) {
   //   return fetch(url)
@@ -45,8 +59,6 @@ function App() {
   //   console.log(res);
   // });
 
-  // function getResourcesSize() {
-  //   let resources = performance.getEntries();
 
   //   let totalSize = resourcesSize;
 
@@ -69,16 +81,11 @@ function App() {
   //   };
   //   localStorage.setItem('carbon', JSON.stringify(item));
   // }
-  console.log("--------",test())
 
   return (
       <div className="App">
         <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-            <h1>{()=>test()}</h1>
+          {eNetResult[0].duration}
         </header>
       </div>
   );
