@@ -2,90 +2,52 @@ import "./App.css";
 import {ENet} from "@grnsft/if-plugins";
 import {useCallback, useEffect, useState} from 'react';
 
-const App = ()=> {
+const App = (callback, deps)=> {
+  const [eNetResult,setENetResult] = useState(0)
+  const [resourcesSize,setResourcesSize] = useState(0)
 
-  const [eNetResult,setENetResult] = useState([{}])
+  const  getResourcesSize = useCallback(()=> {
+    let resources = performance.getEntries();
+    let totalSize = 0;
+    resources.forEach(function(resource) {
+      if (
+        resource.transferSize &&
+        resource.transferSize > 0
 
-  let count = 0;
-  const interval = setInterval(() => {
-    count++;
-    return count
-  }, 1000);
+      ) {
+        totalSize += resource.transferSize;
+      }
+    });
+    setResourcesSize(totalSize)
+  },[])
 
-  const test = useCallback(async () => {
+  const transferToCarbonEmissions= useCallback(async () => {
     const eNet = ENet({'energy-per-gb': 0.002});
-    console.log("interval",interval)
+
+    console.log('resourcesSize====',resourcesSize)
+
     return await eNet.execute([
       {
-        'network/data-in': interval,
+        'network/data-in': resourcesSize,
         'network/data-out': 5,
-        duration: interval,
+        duration: 3600,
         timestamp: '2022-01-01T01:00:00Z',
       },
-    ]).then((data)=>setENetResult(data))
-  }, [interval]);
+    ]).then((data)=> {
+      const { 'network/energy': energy} = data[0];
+      setENetResult(energy)
+    })
+  }, [resourcesSize]);
 
   useEffect(() => {
-     test();
-  }, [ test]);
-
-
-  // function getNetworkRequestSize(url) {
-  //   return fetch(url)
-  //     .then(function (response) {
-  //       if (response.ok) {
-  //         return response.blob();
-  //       }
-  //       throw new Error("Network request failed");
-  //     })
-  //     .then(function (blob) {
-  //       return blob.size;
-  //     })
-  //     .catch(function (error) {
-  //       console.log("Error:", error);
-  //     });
-  // }
-
-  // function bytesToGB(bytes) {
-  //   return bytes / (1024 * 1024 * 1024);
-  // }
-
-  // // 示例用法
-  // var requestUrl = "https://www.baidu.com/";
-  // getNetworkRequestSize(requestUrl).then(function (size) {
-  //   console.log("Request Size:", size);
-  //   var gbSize = bytesToGB(size);
-  //   var res = test(gbSize);
-  //   console.log(res);
-  // });
-
-
-  //   let totalSize = resourcesSize;
-
-  //   resources.forEach(function(resource) {
-  //     if (
-  //       // resource.initiatorType !== 'fetch' &&
-  //       // resource.initiatorType !== 'beacon' &&
-  //       // resource.initiatorType !== 'navigation' &&
-  //       // resource.initiatorType !== 'websocket' &&
-  //       resource.transferSize &&
-  //       resource.transferSize > 0
-  //     ) {
-  //       totalSize += resource.transferSize;
-  //     }
-  //   });
-  //   const now = new Date();
-  //   const item = {
-  //     size: totalSize,
-  //     expire: now.getTime() + 1000 * 60 * 60 * 60 * 8
-  //   };
-  //   localStorage.setItem('carbon', JSON.stringify(item));
-  // }
+    transferToCarbonEmissions().then(r => null);
+    getResourcesSize();
+  });
 
   return (
       <div className="App">
         <header className="App-header">
-          {eNetResult[0].duration}
+          Carbon Emissions : {eNetResult}
         </header>
       </div>
   );
