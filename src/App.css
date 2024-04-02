@@ -3,7 +3,7 @@
   font-weight:bolder;
 }
 
-.App-header {
+.carbon {
   background-color: #282c34;
   min-height: 100vh;
   display: flex;
@@ -12,6 +12,14 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  line-height: 40px;
+
+}
+
+.note{
+  color: white;
+  font-weight:bold;
+  font-size:20px;
 }
 
 @media (prefers-reduced-motion: no-preference) {

@@ -22,16 +22,14 @@ const App = (callback, deps)=> {
   },[])
 
   const transferToCarbonEmissions= useCallback(async () => {
-    const eNet = ENet({'energy-per-gb': 0.002});
-
-    console.log('resourcesSize====',resourcesSize)
+    const eNet = ENet({'energy-per-gb': 0.001});
 
     return await eNet.execute([
       {
-        'network/data-in': resourcesSize,
+        'network/data-in': resourcesSize/(1024 * 1024 * 1024),
         'network/data-out': 5,
         duration: 3600,
-        timestamp: '2022-01-01T01:00:00Z',
+        timestamp: '2024-04-02T01:00:00Z',
       },
     ]).then((data)=> {
       const { 'network/energy': energy} = data[0];
@@ -46,9 +44,10 @@ const App = (callback, deps)=> {
 
   return (
       <div className="App">
-        <header className="App-header">
-          Carbon Emissions : {eNetResult}
-        </header>
+        <div className="carbon">
+          <div className="title">Carbon Emissions : {eNetResult} (tCO2)</div>
+          <div className="note">energy-per-gb：0.001 kWh/GB</div>
+        </div>
       </div>
   );
 }
