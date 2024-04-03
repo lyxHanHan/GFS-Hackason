@@ -23,6 +23,7 @@ const App = (callback, deps)=> {
 
   const transferToCarbonEmissions= useCallback(async () => {
     const eNet = ENet({'energy-per-gb': 0.001});
+    console.log('resourcesSize====',resourcesSize)
 
     return await eNet.execute([
       {
