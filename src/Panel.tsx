@@ -1,84 +1,47 @@
-import React, { ReactElement, useEffect, useState } from 'react';
-import { APP_COLLAPSE_WIDTH, APP_EXTEND_WIDTH, URLS } from './const';
-import classNames from 'classnames';
-import Button from './components/Button';
+import React, { ReactElement, useState, useEffect,useCallback } from 'react';
+import './index.css';
+import { ENet } from "@grnsft/if-plugins";
 
-export default function Panel({ onWidthChange, initialEnabled }: { onWidthChange: (value: number) => void, initialEnabled: boolean }): ReactElement {
-  const [enabled, setEnabled] = useState(initialEnabled);
-  const [sidePanelWidth, setSidePanelWidth] = useState(enabled ? APP_EXTEND_WIDTH: APP_COLLAPSE_WIDTH);
-  const [tabIndex, setTabIndex] = useState(0);
 
-  function handleOnToggle(enabled: boolean) {
-    const value = enabled ? APP_EXTEND_WIDTH : APP_COLLAPSE_WIDTH;
-    setSidePanelWidth(value);
-    onWidthChange(value);
+export default function Panel(): ReactElement {
+  const [number, setNumber] = useState(0);
+  const [eNetResult, setENetResult] = useState(0);
 
-    window['chrome'].storage?.local.set({enabled});
-  }
+  setInterval(() => {
+    const res = window['chrome'].storage?.local.get('value').then((res) => {
+      setNumber(Number(res.value));
+      console.log('value', res.value);
+    }).catch(err => console.log(err));
+  },1000);
 
-  function openPanel(force?: boolean) {
-    const newValue = force || !enabled;
-    setEnabled(newValue);
-    handleOnToggle(newValue);
-  }
+  useEffect(() =>{
+    transferToCarbonEmissions();
+  }, [number]);
+
+  const transferToCarbonEmissions = useCallback(async () => {
+    const eNet = ENet({ "energy-per-gb": 0.001 });
+    console.log('cal');
+    
+    return await eNet
+      .execute([
+        {
+          "network/data-in": number / (1024 * 1024 * 1024),
+          "network/data-out": 5,
+          duration: 3600,
+          timestamp: "2024-04-02T01:00:00Z",
+        },
+      ])
+      .then((data) => {
+        const { "network/energy": energy } = data[0];
+        setENetResult(energy);
+      });
+  }, [number]);
 
   return (
-    <div
-      style={{
-        width: sidePanelWidth - 5,
-        boxShadow: '0px 0px 5px #0000009e',
-      }}
-      className="absolute top-0 right-0 bottom-0 z-max bg-[#F5F8FA] ease-in-out duration-300 overflow-hidden"
-    >
-      <iframe
-        className={classNames('absolute w-full h-full border-none ease-linear overflow-hidden', {
-          'opacity-0': !enabled,
-          '-z-10': !enabled,
-        })}
-        title={URLS[tabIndex].name}
-        src={URLS[tabIndex].url}
-      />
-      <div
-        className={classNames('absolute h-full flex border-none flex-col ease-linear w-[50px] space-y-3 p-1', {
-          'opacity-0': enabled,
-          '-z-10': enabled,
-        })}
-      >
-        {URLS.map(({ name, image }, _index) => {
-          function onMenuClick(index: number) {
-            setTabIndex(index);
-            openPanel(true);
-          }
-          return (
-            <Button active={_index === tabIndex} onClick={() => onMenuClick(_index)} className="py-2">
-              <img src={image} className="w-full" />
-            </Button>
-          );
-        })}
-      </div>
-      <div className="absolute bottom-0 left-0 w-[50px] z-10 flex justify-center items-center p-1">
-        <Button active={enabled} onClick={() => openPanel()}>
-          <span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d={
-                  enabled
-                    ? 'M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25'
-                    : 'M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15'
-                }
-              />
-            </svg>
-          </span>
-        </Button>
+    <div className="app">
+     <div className="carbon">
+        <div className="title">Carbon Emissions : {eNetResult} (tCO2)</div>
+        <div className="note">energy-per-gb：0.001 kWh/GB</div>
       </div>
     </div>
   );
