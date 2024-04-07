@@ -8,25 +8,27 @@ export default function Panel(): ReactElement {
   const [eNetResult, setENetResult] = useState(0);
 
   setInterval(() => {
-    const res = window['chrome'].storage?.local.get('value').then((res) => {
-      setNumber(Number(res.value));
-      console.log('value', res.value);
-    }).catch(err => console.log(err));
-  },1000);
+    console.log('run');
+    let totalSize = 0;
+    let resources = performance.getEntries();
+    resources.forEach(function (resource) {
+    if (resource.transferSize && resource.transferSize > 0) {
+      totalSize += resource.transferSize;
+    }})
+    setNumber(prev => prev + totalSize);
+  }, 10000)
 
   useEffect(() =>{
     transferToCarbonEmissions();
   }, [number]);
 
-  const transferToCarbonEmissions = useCallback(async () => {
+  const transferToCarbonEmissions = async () => {
     const eNet = ENet({ "energy-per-gb": 0.001 });
-    console.log('cal');
-    
     return await eNet
       .execute([
         {
           "network/data-in": number / (1024 * 1024 * 1024),
-          "network/data-out": 5,
+          "network/data-out": 0,
           duration: 3600,
           timestamp: "2024-04-02T01:00:00Z",
         },
@@ -35,7 +37,7 @@ export default function Panel(): ReactElement {
         const { "network/energy": energy } = data[0];
         setENetResult(energy);
       });
-  }, [number]);
+  };
 
   return (
     <div className="app">
